@@ -8,9 +8,9 @@
 .ds LF J. Hunt
 .ds RF FORMFEED[Page %]
 .ds LH INTERNET DRAFT
-.ds RH January 24, 2016
+.ds RH March 24, 2016
 .ds CH TSDP
-.ds CF Expires July 27, 2016
+.ds CF Expires September 25, 2016
 .hy 0
 .nh
 .ad l
@@ -19,7 +19,7 @@
 .nf
 .tl 'INTERNET-DRAFT''J. Hunt'
 .tl 'Intended Status: Proposed Standard''NiftyLogic, Inc.'
-.tl 'Expires: July 27, 2016''January 24, 2016'
+.tl 'Expires: September 25, 2016''March 24, 2016'
 .fi
 
 .\" Note. The ".tl" directive is used to generate the leading header
@@ -105,21 +105,21 @@ Table of Contents
      3.2  Equivalance and Comparison  . . . . . . . . . . . . . . . .  7
      3.3  Examples of Equivalence . . . . . . . . . . . . . . . . . .  8
    4  Wire Protocol . . . . . . . . . . . . . . . . . . . . . . . . .  9
-     4.1  PDU Format  . . . . . . . . . . . . . . . . . . . . . . . .  9
-       4.1.1  PDU Header Format . . . . . . . . . . . . . . . . . . .  9
-       4.1.2  PDU Frame Format  . . . . . . . . . . . . . . . . . . . 10
+     4.1  MSG Format  . . . . . . . . . . . . . . . . . . . . . . . .  9
+       4.1.1  MSG Header Format . . . . . . . . . . . . . . . . . . .  9
+       4.1.2  MSG Frame Format  . . . . . . . . . . . . . . . . . . . 10
      4.2  Bogons  . . . . . . . . . . . . . . . . . . . . . . . . . . 12
        4.2.1  Malformed Headers . . . . . . . . . . . . . . . . . . . 12
        4.2.2  Malformed Frames  . . . . . . . . . . . . . . . . . . . 13
        4.2.3  Additional Rules  . . . . . . . . . . . . . . . . . . . 13
        4.2.4  Handling Bogons . . . . . . . . . . . . . . . . . . . . 13
-     4.3  PDU Specification . . . . . . . . . . . . . . . . . . . . . 14
-       4.3.1  HEARTBEAT PDU . . . . . . . . . . . . . . . . . . . . . 14
-       4.3.2  SUBMIT PDU  . . . . . . . . . . . . . . . . . . . . . . 14
-       4.3.3  BROADCAST PDU . . . . . . . . . . . . . . . . . . . . . 17
-       4.3.4  FORGET PDU  . . . . . . . . . . . . . . . . . . . . . . 20
-       4.3.5  REPLAY PDU  . . . . . . . . . . . . . . . . . . . . . . 21
-       4.3.6  SUBSCRIBE PDU . . . . . . . . . . . . . . . . . . . . . 21
+     4.3  MSG Specification . . . . . . . . . . . . . . . . . . . . . 14
+       4.3.1  HEARTBEAT MSG . . . . . . . . . . . . . . . . . . . . . 14
+       4.3.2  SUBMIT MSG  . . . . . . . . . . . . . . . . . . . . . . 14
+       4.3.3  BROADCAST MSG . . . . . . . . . . . . . . . . . . . . . 17
+       4.3.4  FORGET MSG  . . . . . . . . . . . . . . . . . . . . . . 20
+       4.3.5  REPLAY MSG  . . . . . . . . . . . . . . . . . . . . . . 21
+       4.3.6  SUBSCRIBE MSG . . . . . . . . . . . . . . . . . . . . . 21
    5  Security Considerations . . . . . . . . . . . . . . . . . . . . 23
    6  IANA Considerations . . . . . . . . . . . . . . . . . . . . . . 23
    7  References  . . . . . . . . . . . . . . . . . . . . . . . . . . 23
@@ -142,14 +142,15 @@ troubleshooting, and capacity forecasting.  Self-healing systems can be
 implemented using collected monitoring data to dispatch automated agents to
 fix problems and/or allocate more resources as thresholds are exceeded.
 
-The Telemetry and Sensor Data Protocol (TSDP) is a lightweight,
-connection-less protocol that uses small, platform-independent, binary
-datagrams for submission and dissemination of monitored data.  It provides
-semantics for aggregation of collected measurements, and defines a means for
-consumers of those measurements to opt-in to receive aggregates of interest.
+The Telemetry and Sensor Data Protocol (TSDP) is a lightweight protocol that
+uses message-based communication channels for submissions and dissemination
+of monitored data.  It provides semantics for aggregation of collected
+measurements, and defines a means for consumers of those measurements to
+opt-in to receive aggregates of interest.
 
 The intent of TSDP is to provide a well-specified standard for building
-monitoring systems.
+monitoring systems.  It is not the intent of TSDP to prefer any specific
+transport (i.e. TCP or UDP), or message communication library.
 
 .ti 0
 1.1  Terminology
@@ -366,11 +367,12 @@ and D are equivalent per rule #4.  D and E are equivalent per rule #4
 .ti 0
 4  Wire Protocol
 
-TSDP components communicate by exchanging Protocol Data Units (PDUs) with one another,
-over UDP.  Each PDU consists of a HEADER and one or more FRAMEs.
+TSDP components communicate by exchanging messages (MSGs) with one another,
+over a connection-oriented transport.  Each MSG consists of a HEADER and one
+or more FRAMEs.
 
 .ti 0
-4.1  PDU Format
+4.1  MSG Format
 
 .in +3
 .nf
@@ -388,10 +390,10 @@ over UDP.  Each PDU consists of a HEADER and one or more FRAMEs.
 .in -3
 
 .ti 0
-4.1.1  PDU Header Format
+4.1.1  MSG Header Format
 
-The HEADER provides metadata about the PDU, including the version of the
-Bolo protocol that governs the encoding and behavior, an OPCODE, a PAYLOAD
+The HEADER provides metadata about the MSG, including the version of the
+TSDP protocol that governs the encoding and behavior, an OPCODE, a PAYLOAD
 and a set of operation-specific FLAGS.
 
 The HEADER is exactly 32-bits long:
@@ -413,7 +415,7 @@ The HEADER is exactly 32-bits long:
 4.1.1.1  VERSION Field
 
 The 4-bit VERSION field identifies what version of the protocol (and, by
-extension, this specification) was used to generate the PDU.  This allows for
+extension, this specification) was used to generate the MSG.  This allows for
 future expansion of the wire protocol.  Future versions of this specification
 will identify where any behavior is expected to diverge, based on the
 protocol version.
@@ -433,7 +435,7 @@ Currently allocated bit patterns for VERSION are:
 4.1.1.2  OPCODE Field
 
 The 4-bit OPCODE field controls the syntax and semantics of both the FLAGS
-field and the FRAMEs that comprise the rest of the PDU.
+field and the FRAMEs that comprise the rest of the MSG.
 
 Currently allocated bit patterns for OPCODE are:
 
@@ -480,9 +482,9 @@ itself to.
 .in -3
 
 .ti 0
-4.1.2  PDU Frame Format
+4.1.2  MSG Frame Format
 
-The actual data of TSDP PDUs lives in one or more frames.  Each frame consists of a
+The actual data of TSDP MSGs lives in one or more frames.  Each frame consists of a
 small, fixed-size 16-byte metadata header.
 
 .in +3
@@ -501,7 +503,7 @@ small, fixed-size 16-byte metadata header.
 .ti 0
 4.1.2.1  FF Field
 
-The 1-bit FF field identifies whether or not this frame is the last one in the PDU,
+The 1-bit FF field identifies whether or not this frame is the last one in the MSG,
 or if more frames follow.
 
 .in +3
@@ -590,7 +592,7 @@ protocol data unit that MUST be ignored by conforming implementations.
 4.2.1  Malformed Headers
 
 .ne 6
-A Malformed Header is any PDU header that meets any or all of the following
+A Malformed Header is any MSG header that meets any or all of the following
 criteria:
 
 .nf
@@ -601,14 +603,14 @@ criteria:
 .in -4
 .fi
 
-Any PDU found to have a Malformed Header MUST be considered a Bogon,
+Any MSG found to have a Malformed Header MUST be considered a Bogon,
 regardless of whether or not its data frames are well-formed.
 
 .ti 0
 4.2.2  Malformed Frames
 
 .ne 6
-A Malformed Frame is any PDU data frame that meets any or all of the following
+A Malformed Frame is any MSG data frame that meets any or all of the following
 criteria:
 
 .nf
@@ -619,14 +621,14 @@ criteria:
 .in -4
 .fi
 
-Any PDU found to have a Malformed Frame MUST be considered a Bogon,
+Any MSG found to have a Malformed Frame MUST be considered a Bogon,
 regardless of whether the header, or other data frames are well-formed.
 
 .ti 0
 4.2.3  Additional Rules
 
 .ne 6
-In addition to the previous rules for Bogon detection, a PDU MUST be
+In addition to the previous rules for Bogon detection, a MSG MUST be
 considered a Bogon if:
 
 .nf
@@ -637,7 +639,7 @@ considered a Bogon if:
 .in -4
 .fi
 
-Furthermore, OPCODEs are free to mandate that a PDU be considered a Bogon
+Furthermore, OPCODEs are free to mandate that a MSG be considered a Bogon
 based on semantic rules applied to the contents of data frames, flags
 and more.
 
@@ -646,17 +648,17 @@ and more.
 
 Conforming implementations MUST read and discard any Bogon.
 All constituent data frames MUST be read and discarded, and action MUST NOT
-be taken in response to the PDU.
+be taken in response to the MSG.
 
 Implementations MAY log such failures, to assist administrators and system
 designers in troubleshooting resultant data loss and other issues.
 .bp
 
 .ti 0
-4.3  PDU Specification
+4.3  MSG Specification
 
 .ti 0
-4.3.1  HEARTBEAT PDU
+4.3.1  HEARTBEAT MSG
 
 Clients submitting data to an aggregator may also opt to send HEARTBEAT
 packets that identify how many UDP packets have been transmitted by the
@@ -671,13 +673,13 @@ Packets are tracked based on the tuple (sender-ip, sender-port).
 
 None.
 
-If the PAYLOAD field is not set to all zeroes, the PDU must be considered a
-Bogon PDU.
+If the PAYLOAD field is not set to all zeroes, the MSG must be considered a
+Bogon MSG.
 
 .ti 0
 4.3.1.2  Data Frames
 
-Each HEARTBEAT PDU MUST consist of exactly two data frames, a TSTAMP frame
+Each HEARTBEAT MSG MUST consist of exactly two data frames, a TSTAMP frame
 which indicates when the measurement was taken, followed by a UINT/64 frame
 that contains the number of packets transmitted so far:
 
@@ -704,7 +706,7 @@ Ro (ROLLOVER) is a 1-bit boolean flag that indicates whether or not the
 packet value (frame 2) has rolled over since the last submission.
 
 .ti 0
-4.3.2  SUBMIT PDU
+4.3.2  SUBMIT MSG
 
 The SUBMIT opcode allows client systems to provide measurement, state
 and auxiliary data to the aggregator(s).
@@ -721,11 +723,11 @@ STATE       EVENT        FACT
 .in -10
 .fi
 
-A PAYLOAD value must be supplied.  Any PDUs found without a PAYLOAD value
-set MUST be considered Bogon PDUs.
+A PAYLOAD value must be supplied.  Any MSGs found without a PAYLOAD value
+set MUST be considered Bogon MSGs.
 
-PAYLOAD values cannot be combined.  Any PDUs found with multiple PAYLOAD
-values set MUST be considered Bogon PDUs.
+PAYLOAD values cannot be combined.  Any MSGs found with multiple PAYLOAD
+values set MUST be considered Bogon MSGs.
 
 Composition of constituent data frames, as well as the semantics of the
 FLAGS field depends on the PAYLOAD in use.  These will be specified in the
@@ -869,7 +871,7 @@ None.
 None.
 
 .ti 0
-4.3.3  BROADCAST PDU
+4.3.3  BROADCAST MSG
 
 The BROADCAST opcode is used by aggregators to send disseminate information
 about the state of the world to interested, connected subscriber(s).
@@ -886,11 +888,11 @@ STATE       EVENT        FACT
 .in -10
 .fi
 
-A PAYLOAD value must be supplied.  Any PDUs found without a PAYLOAD value
-set MUST be considered Bogon PDUs.
+A PAYLOAD value must be supplied.  Any MSGs found without a PAYLOAD value
+set MUST be considered Bogon MSGs.
 
-PAYLOAD values cannot be combined.  Any PDUs found with multiple PAYLOAD
-values set MSUT be considered Bogon PDUs.
+PAYLOAD values cannot be combined.  Any MSGs found with multiple PAYLOAD
+values set MSUT be considered Bogon MSGs.
 
 Composition of constituent data frames, as well as the semantics of the
 FLAGS field depends on the PAYLOAD in use.  These will be specified in the
@@ -1119,7 +1121,7 @@ None.
 None.
 
 .ti 0
-4.3.4  FORGET PDU
+4.3.4  FORGET MSG
 
 The FORGET opcode is used by system operators to drop one or more
 measurements or states.
@@ -1137,8 +1139,8 @@ STATE
 .in -10
 .fi
 
-A PAYLOAD value must be supplied.  Any PDUs found without a PAYLOAD value
-set MUST be considered Bogon PDUs.
+A PAYLOAD value must be supplied.  Any MSGs found without a PAYLOAD value
+set MUST be considered Bogon MSGs.
 
 PAYLOAD values can be combined, meaning that they operate on any metric
 that matches at least one of the set PAYLOAD values.
@@ -1182,7 +1184,7 @@ Ig: (IGNORE) How to handle future data submissions
 .fi
 
 .ti 0
-4.3.5  REPLAY PDU
+4.3.5  REPLAY MSG
 
 The REPLAY opcode is used by subscribers to request a full re-broadcast
 of the most recent aggregated metrics, states, events and facts.  This
@@ -1208,8 +1210,8 @@ STATE       EVENT        FACT
 .in -10
 .fi
 
-A PAYLOAD value must be supplied.  Any PDUs found without a PAYLOAD value
-set MUST be considered Bogon PDUs.
+A PAYLOAD value must be supplied.  Any MSGs found without a PAYLOAD value
+set MUST be considered Bogon MSGs.
 
 PAYLOAD values can be combined, meaning that they operate on any metric
 that matches at least one of the set PAYLOAD values.
@@ -1226,7 +1228,7 @@ None.
 None.
 
 .ti 0
-4.3.6  SUBSCRIBE PDU
+4.3.6  SUBSCRIBE MSG
 
 The SUBSCRIBE opcode is used by subscribers to identify what subset of
 metrics, states, events and facts they are interested in receiving.  This
@@ -1253,8 +1255,8 @@ STATES      EVENT        FACT
 .in -10
 .fi
 
-A PAYLOAD value must be supplied.  Any PDUs found without a PAYLOAD value
-set MUST be considered Bogon PDUs.
+A PAYLOAD value must be supplied.  Any MSGs found without a PAYLOAD value
+set MUST be considered Bogon MSGs.
 
 PAYLOAD values can be combined, meaning that they operate on any metric
 that matches at least one of the set PAYLOAD values.
